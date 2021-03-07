@@ -4,16 +4,13 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { HelperModule } from './helper/helper.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath: `./env/.${process.env.NODE_ENV || 'development'}.env`,
       isGlobal: true,
-    }),
-    ThrottlerModule.forRoot({
-      ttl: 60,
-      limit: 100,
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -25,7 +22,12 @@ import { APP_GUARD } from '@nestjs/core';
       synchronize: process.env.NODE_ENV !== 'production',
       autoLoadEntities: true,
     }),
+    ThrottlerModule.forRoot({
+      ttl: 60,
+      limit: 100,
+    }),
     AuthModule,
+    HelperModule,
   ],
   controllers: [],
   providers: [

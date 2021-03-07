@@ -1,30 +1,54 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import { User } from './entities/User.entity';
-import { AuthDto } from './dto/auth.dto';
+import { UserDto } from './dto/user.dto';
+import { Cache } from 'cache-manager';
+import { HelperService } from '../helper/helper.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private readonly usersRepository: Repository<User>,
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
+    private readonly helperService: HelperService,
   ) {}
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+  async findByUsername(username: string): Promise<User> {
+    let user = await this.getCachedUser(username);
+    if (!user) {
+      user = await this.usersRepository.findOne({ username });
+      if (user) {
+        await this.cacheUser(user);
+      }
+    }
+    return user;
   }
 
-  findByUsername(username: string): Promise<User> {
-    return this.usersRepository.findOne({ username });
+  async deleteUser(username: string): Promise<void> {
+    await this.deleteUserCache(username);
+    await this.usersRepository.delete({ username });
   }
 
-  async createUser(userInfo: AuthDto): Promise<User> {
-    const { username, password } = userInfo;
+  async createUser(userDto: UserDto): Promise<User> {
+    const { username, password } = userDto;
     const user = new User();
     user.username = username;
-    user.password = await bcrypt.hash(password, 15);
+    user.password = await this.helperService.hashPassword(password);
     return this.usersRepository.save(user);
+  }
+
+  private async cacheUser(user: User): Promise<void> {
+    await this.cacheManager.set(`user:${user.username}`, user);
+  }
+
+  private async getCachedUser(username: string): Promise<User> {
+    return this.cacheManager.get(`user:${username}`);
+  }
+
+  private async deleteUserCache(username: string): Promise<void> {
+    await this.cacheManager.del(`user:${username}`);
   }
 }

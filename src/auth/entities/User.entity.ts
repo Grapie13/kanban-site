@@ -21,6 +21,7 @@ export class User {
   password: string;
 
   @Column({
+    name: 'createdat',
     type: 'timestamp with time zone',
     default: new Date().toISOString(),
   })
