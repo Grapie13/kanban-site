@@ -14,7 +14,6 @@ import { AuthService } from './auth.service';
 import { UserDto } from './dto/user.dto';
 import { JoiValidationPipe } from './pipes/joiValidation.pipe';
 import { signupSchema } from './validation/signupSchema';
-import { DeleteDto } from './dto/delete.dto';
 import { AuthorizationPipe } from './pipes/authorization.pipe';
 import { HelperService } from '../helper/helper.service';
 
@@ -78,12 +77,12 @@ export class AuthController {
   }
 
   @Delete('deleteuser')
-  async delete(@Body(AuthorizationPipe) deleteDto: DeleteDto) {
-    const user = await this.authService.findByUsername(deleteDto.username);
+  async delete(@Body(AuthorizationPipe) userDto: UserDto) {
+    const user = await this.authService.findByUsername(userDto.username);
     if (!user) {
       throw new NotFoundException('There is no user bound to this token');
     }
-    await this.authService.deleteUser(deleteDto.username);
+    await this.authService.deleteUser(userDto.username);
     return {};
   }
 }

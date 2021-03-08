@@ -22,12 +22,17 @@ describe('AuthService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        HelperService,
+        {
+          provide: HelperService,
+          useValue: {
+            hashPassword: jest.fn().mockResolvedValue(user.password),
+          },
+        },
         {
           provide: getRepositoryToken(User),
           useValue: {
             findOne: jest.fn().mockResolvedValue(user),
-            save: jest.fn(),
+            save: jest.fn().mockResolvedValue(user),
             delete: jest.fn().mockResolvedValue(true),
           },
         },
@@ -51,10 +56,33 @@ describe('AuthService', () => {
     expect(service).toBeDefined();
   });
 
-  it('tries to get the user from cache and if it does not exist then it searches it up in the database', async () => {
-    const returnedUser = await service.findByUsername('Tester');
-    expect(returnedUser.username).toEqual(user.username);
-    expect(cacheManager.get).toHaveBeenCalled();
-    expect(repository.findOne).toHaveBeenCalled();
+  describe('findByUsername', () => {
+    it('searches for the user in the cache and the database, if the user is not cached', async () => {
+      const returnedUser = await service.findByUsername('Tester');
+      expect(returnedUser.username).toEqual(user.username);
+      expect(cacheManager.get).toHaveBeenCalled();
+      expect(cacheManager.set).toHaveBeenCalled();
+      expect(repository.findOne).toHaveBeenCalled();
+    });
+  });
+
+  describe('createUser', () => {
+    it('saves a user in the database and then caches it', async () => {
+      const createdUser = await service.createUser({
+        username: user.username,
+        password: user.password,
+      });
+      expect(createdUser.username).toEqual(user.username);
+      expect(repository.save).toHaveBeenCalled();
+      expect(cacheManager.set).toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteUser', () => {
+    it('deletes a user from the database and the cache', async () => {
+      await service.deleteUser(user.username);
+      expect(cacheManager.del).toHaveBeenCalled();
+      expect(repository.delete).toHaveBeenCalled();
+    });
   });
 });

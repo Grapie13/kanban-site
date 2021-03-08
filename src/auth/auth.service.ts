@@ -27,17 +27,19 @@ export class AuthService {
     return user;
   }
 
+  async createUser(userDto: UserDto): Promise<User> {
+    const { username, password } = userDto;
+    let user = new User();
+    user.username = username;
+    user.password = await this.helperService.hashPassword(password);
+    user = await this.usersRepository.save(user);
+    this.cacheUser(user);
+    return user;
+  }
+
   async deleteUser(username: string): Promise<void> {
     await this.deleteUserCache(username);
     await this.usersRepository.delete({ username });
-  }
-
-  async createUser(userDto: UserDto): Promise<User> {
-    const { username, password } = userDto;
-    const user = new User();
-    user.username = username;
-    user.password = await this.helperService.hashPassword(password);
-    return this.usersRepository.save(user);
   }
 
   private async cacheUser(user: User): Promise<void> {
