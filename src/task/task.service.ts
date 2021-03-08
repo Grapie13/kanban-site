@@ -49,7 +49,9 @@ export class TaskService {
   }
 
   async updateTask(taskInfo: TaskDto): Promise<Task> {
+    console.log(taskInfo);
     let task = await this.findById(taskInfo.id);
+    console.log(task);
     task.name = taskInfo.name ?? task.name;
     task.stage = taskInfo.stage ?? task.stage;
     task.updatedAt = new Date();
