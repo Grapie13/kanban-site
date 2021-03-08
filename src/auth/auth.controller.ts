@@ -9,12 +9,13 @@ import {
   HttpCode,
   Get,
   Param,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDto } from './dto/user.dto';
-import { JoiValidationPipe } from './pipes/joiValidation.pipe';
-import { signupSchema } from './validation/signupSchema';
-import { AuthorizationPipe } from './pipes/authorization.pipe';
+import { JoiValidationPipe } from '../pipes/joiValidation.pipe';
+import { signupSchema } from '../validation/signupSchema';
+import { AuthorizationPipe } from '../pipes/authorization.pipe';
 import { HelperService } from '../helper/helper.service';
 
 @Controller('v1/auth')
@@ -57,14 +58,14 @@ export class AuthController {
   async signin(@Body() userDto: UserDto) {
     const user = await this.authService.findByUsername(userDto.username);
     if (!user) {
-      throw new BadRequestException('Invalid username or password');
+      throw new UnauthorizedException('Invalid username or password');
     }
     const verifiedPassword = await this.helperService.verifyPassword(
       userDto.password,
       user.password,
     );
     if (!verifiedPassword) {
-      throw new BadRequestException('Invalid username or password');
+      throw new UnauthorizedException('Invalid username or password');
     }
     user.password = undefined; // Hide password from the receiver
     return {

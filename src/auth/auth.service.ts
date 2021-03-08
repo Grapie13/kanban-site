@@ -1,10 +1,11 @@
-import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
+import { CACHE_MANAGER, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/User.entity';
+import { User } from '../entities/User.entity';
 import { UserDto } from './dto/user.dto';
 import { Cache } from 'cache-manager';
 import { HelperService } from '../helper/helper.service';
+import { TaskService } from '../task/task.service';
 
 @Injectable()
 export class AuthService {
@@ -14,12 +15,19 @@ export class AuthService {
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
     private readonly helperService: HelperService,
+    @Inject(forwardRef(() => TaskService))
+    private readonly taskService: TaskService,
   ) {}
 
   async findByUsername(username: string): Promise<User> {
     let user = await this.getCachedUser(username);
     if (!user) {
-      user = await this.usersRepository.findOne({ username });
+      user = await this.usersRepository.findOne(
+        {
+          username,
+        },
+        { relations: ['tasks'] },
+      );
       if (user) {
         await this.cacheUser(user);
       }
@@ -33,12 +41,14 @@ export class AuthService {
     user.username = username;
     user.password = await this.helperService.hashPassword(password);
     user = await this.usersRepository.save(user);
-    this.cacheUser(user);
+    await this.cacheUser(user);
     return user;
   }
 
   async deleteUser(username: string): Promise<void> {
+    const user = await this.findByUsername(username);
     await this.deleteUserCache(username);
+    await this.taskService.deleteUsersTaskCache(user);
     await this.usersRepository.delete({ username });
   }
 
@@ -50,7 +60,7 @@ export class AuthService {
     return this.cacheManager.get(`user:${username}`);
   }
 
-  private async deleteUserCache(username: string): Promise<void> {
+  async deleteUserCache(username: string): Promise<void> {
     await this.cacheManager.del(`user:${username}`);
   }
 }

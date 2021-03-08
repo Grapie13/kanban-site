@@ -5,7 +5,8 @@ import { Cache } from 'cache-manager';
 import { Repository } from 'typeorm';
 import { HelperService } from '../helper/helper.service';
 import { AuthService } from './auth.service';
-import { User } from './entities/User.entity';
+import { User } from '../entities/User.entity';
+import { TaskService } from '../task/task.service';
 
 const user = new User();
 user.id = 1;
@@ -26,6 +27,12 @@ describe('AuthService', () => {
           provide: HelperService,
           useValue: {
             hashPassword: jest.fn().mockResolvedValue(user.password),
+          },
+        },
+        {
+          provide: TaskService,
+          useValue: {
+            deleteUsersTaskCache: jest.fn(),
           },
         },
         {

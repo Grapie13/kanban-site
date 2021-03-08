@@ -2,8 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HelperService } from '../helper/helper.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { User } from './entities/User.entity';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { User } from '../entities/User.entity';
+import {
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
 
 const user = new User();
@@ -123,7 +127,7 @@ describe('AuthController', () => {
           password: user.password,
         });
       } catch (err) {
-        expect(err).toBeInstanceOf(BadRequestException);
+        expect(err).toBeInstanceOf(UnauthorizedException);
         done();
       }
     });
@@ -135,7 +139,7 @@ describe('AuthController', () => {
           password: 'BadPassword',
         });
       } catch (err) {
-        expect(err).toBeInstanceOf(BadRequestException);
+        expect(err).toBeInstanceOf(UnauthorizedException);
         done();
       }
     });

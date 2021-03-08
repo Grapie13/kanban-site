@@ -5,7 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { HelperModule } from './helper/helper.module';
-import { TodoModule } from './todo/todo.module';
+import { TaskModule } from './task/task.module';
 
 @Module({
   imports: [
@@ -29,7 +29,7 @@ import { TodoModule } from './todo/todo.module';
     }),
     AuthModule,
     HelperModule,
-    TodoModule,
+    TaskModule,
   ],
   controllers: [],
   providers: [

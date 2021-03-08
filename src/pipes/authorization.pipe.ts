@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, PipeTransform } from '@nestjs/common';
-import { JWTPayload } from '../../helper/dto/jwtPayload.dto';
-import { HelperService } from '../../helper/helper.service';
-import { UserDto } from '../dto/user.dto';
+import { JWTPayload } from '../helper/dto/jwtPayload.dto';
+import { HelperService } from '../helper/helper.service';
+import { UserDto } from '../auth/dto/user.dto';
 
 @Injectable()
 export class AuthorizationPipe implements PipeTransform {

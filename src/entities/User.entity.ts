@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Task } from './Task.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -23,7 +24,10 @@ export class User {
   @Column({
     name: 'createdat',
     type: 'timestamp with time zone',
-    default: new Date().toISOString(),
+    default: new Date(),
   })
   createdAt: Date;
+
+  @OneToMany(() => Task, (task) => task.user, { onDelete: 'CASCADE' })
+  tasks: Task[];
 }

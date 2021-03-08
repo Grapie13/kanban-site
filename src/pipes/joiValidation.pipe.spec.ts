@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { JoiValidationPipe } from './joiValidation.pipe';
-import { UserDto } from '../dto/user.dto';
+import { UserDto } from '../auth/dto/user.dto';
 import { signupSchema } from '../validation/signupSchema';
 
 const username = 'CorrectUsername',

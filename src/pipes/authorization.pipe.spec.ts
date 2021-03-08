@@ -1,8 +1,8 @@
 import { ForbiddenException } from '@nestjs/common';
 import { AuthorizationPipe } from './authorization.pipe';
-import { HelperService } from '../../helper/helper.service';
+import { HelperService } from '../helper/helper.service';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserDto } from '../dto/user.dto';
+import { UserDto } from '../auth/dto/user.dto';
 
 const testToken = 'testToken';
 const user: UserDto = {
