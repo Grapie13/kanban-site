@@ -49,9 +49,7 @@ export class TaskService {
   }
 
   async updateTask(taskInfo: TaskDto): Promise<Task> {
-    console.log(taskInfo);
     let task = await this.findById(taskInfo.id);
-    console.log(task);
     task.name = taskInfo.name ?? task.name;
     task.stage = taskInfo.stage ?? task.stage;
     task.updatedAt = new Date();
@@ -62,8 +60,10 @@ export class TaskService {
   }
 
   async deleteTask(id: number): Promise<void> {
-    await this.deleteTaskCache(id);
-    await this.taskRepository.delete({ id });
+    const task = await this.findById(id);
+    await this.authService.deleteUserCache(task.user.username);
+    await this.deleteTaskCache(task.id);
+    await this.taskRepository.delete(task);
   }
 
   private getCachedTask(id: number): Promise<Task> {

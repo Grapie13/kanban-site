@@ -81,5 +81,6 @@ export class TaskController {
       );
     }
     await this.taskService.deleteTask(task.id);
+    return {};
   }
 }

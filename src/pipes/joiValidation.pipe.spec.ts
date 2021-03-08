@@ -31,10 +31,10 @@ describe('JoiValidationPipe', () => {
     describe('username errors', () => {
       const badUserDTO: UserDto = {
         password,
-      } as any;
+      };
 
       it('should throw an error, because the username is missing', () => {
-        const errorPipe = () => pipe.transform(badUserDTO as any);
+        const errorPipe = () => pipe.transform(badUserDTO);
         expect(errorPipe).toThrowError(BadRequestException);
         expect(errorPipe).toThrowError('Username is required');
       });
@@ -60,10 +60,10 @@ describe('JoiValidationPipe', () => {
     describe('password errors', () => {
       const badUserDTO: UserDto = {
         username,
-      } as any;
+      };
 
       it('should throw an error for missing password', () => {
-        const errorPipe = () => pipe.transform(badUserDTO as any);
+        const errorPipe = () => pipe.transform(badUserDTO);
         expect(errorPipe).toThrowError(BadRequestException);
         expect(errorPipe).toThrowError('Password is required');
       });

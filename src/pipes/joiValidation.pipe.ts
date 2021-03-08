@@ -8,7 +8,7 @@ export class JoiValidationPipe implements PipeTransform {
   constructor(private schema: ObjectSchema) {}
 
   transform(value: UserDto | TaskDto) {
-    if (!(value instanceof UserDto) || !(value instanceof TaskDto)) {
+    if (!(value instanceof Object)) {
       return value;
     }
     const { error } = this.schema.validate(value);

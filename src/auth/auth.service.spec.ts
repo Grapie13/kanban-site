@@ -64,7 +64,7 @@ describe('AuthService', () => {
   });
 
   describe('findByUsername', () => {
-    it('searches for the user in the cache and the database, if the user is not cached', async () => {
+    it('should search for the user in the cache and the database, if the user is not cached', async () => {
       const returnedUser = await service.findByUsername('Tester');
       expect(returnedUser.username).toEqual(user.username);
       expect(cacheManager.get).toHaveBeenCalled();
@@ -74,7 +74,7 @@ describe('AuthService', () => {
   });
 
   describe('createUser', () => {
-    it('saves a user in the database and then caches it', async () => {
+    it('should save a user in the database and then cache it', async () => {
       const createdUser = await service.createUser({
         username: user.username,
         password: user.password,
@@ -86,7 +86,7 @@ describe('AuthService', () => {
   });
 
   describe('deleteUser', () => {
-    it('deletes a user from the database and the cache', async () => {
+    it('should delete a user from the database and the cache', async () => {
       await service.deleteUser(user.username);
       expect(cacheManager.del).toHaveBeenCalled();
       expect(repository.delete).toHaveBeenCalled();
