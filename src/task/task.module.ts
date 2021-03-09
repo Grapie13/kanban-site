@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Task } from '../entities/Task.entity';
 import { CacheConfigModule } from '../cache-config/cache-config.module';
 import { AuthModule } from '../auth/auth.module';
-import { HelperModule } from 'src/helper/helper.module';
+import { HelperModule } from '../helper/helper.module';
 
 @Module({
   imports: [

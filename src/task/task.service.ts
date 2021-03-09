@@ -5,7 +5,7 @@ import { AuthService } from '../auth/auth.service';
 import { Repository } from 'typeorm';
 import { Task } from '../entities/Task.entity';
 import { TaskDto } from './dto/task.dto';
-import { User } from 'src/entities/User.entity';
+import { User } from '../entities/User.entity';
 
 @Injectable()
 export class TaskService {

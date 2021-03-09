@@ -13,10 +13,10 @@ import {
   Post,
   UsePipes,
 } from '@nestjs/common';
-import { AuthService } from 'src/auth/auth.service';
-import { AuthorizationPipe } from 'src/pipes/authorization.pipe';
-import { JoiValidationPipe } from 'src/pipes/joiValidation.pipe';
-import { taskSchema } from 'src/validation/taskSchema';
+import { AuthService } from '../auth/auth.service';
+import { AuthorizationPipe } from '../pipes/authorization.pipe';
+import { JoiValidationPipe } from '../pipes/joiValidation.pipe';
+import { taskSchema } from '../validation/taskSchema';
 import { TaskDto } from './dto/task.dto';
 import { TaskService } from './task.service';
 

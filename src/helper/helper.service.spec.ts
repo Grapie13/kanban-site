@@ -55,12 +55,6 @@ describe('HelperService', () => {
   });
 
   describe('verifyJWT', () => {
-    it('should throw an error if the token is malformed', () => {
-      const token = 'malformed';
-      const tokenError = () => service.verifyJWT(token);
-      expect(tokenError).toThrow('jwt malformed');
-    });
-
     it('should throw an error if the token has an invalid signature', () => {
       process.env.JWT_SECRET = 'wrongsecret';
       const token = service.signJWT(payload);
