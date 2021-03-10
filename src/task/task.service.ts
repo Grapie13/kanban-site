@@ -20,7 +20,9 @@ export class TaskService {
         relations: ['user'],
       },
     );
-    task.user.password = undefined;
+    if (task) {
+      task.user.password = undefined;
+    }
     return task;
   }
 
