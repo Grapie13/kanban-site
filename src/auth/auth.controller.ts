@@ -77,7 +77,7 @@ export class AuthController {
     };
   }
 
-  @Delete('deleteuser')
+  @Delete('user')
   async delete(@Body(AuthorizationPipe) userDto: UserDto) {
     const user = await this.authService.findByUsername(userDto.username);
     if (!user) {

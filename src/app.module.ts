@@ -10,7 +10,7 @@ import { TaskModule } from './task/task.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: `./env/.${process.env.NODE_ENV || 'development'}.env`,
+      envFilePath: `./env/.${process.env.NODE_ENV ?? 'development'}.env`,
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({

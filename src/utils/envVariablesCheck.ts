@@ -5,10 +5,12 @@ const VARS = [
   'TYPEORM_DATABASE',
   'TYPEORM_PORT',
   'TYPEORM_MIGRATIONS',
-  'CACHE_HOST',
-  'CACHE_PORT',
+  'APP_PORT',
   'JWT_SECRET',
 ];
+if (process.env.NODE_ENV === 'test') {
+  VARS.push('TEST_HOST');
+}
 let failMsg = '';
 
 export const envVariablesCheck = () => {

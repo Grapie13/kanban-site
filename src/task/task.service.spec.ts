@@ -1,7 +1,6 @@
 import { CACHE_MANAGER } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Cache } from 'cache-manager';
 import { AuthService } from '../auth/auth.service';
 import { Repository } from 'typeorm';
 import { Task, TaskStage } from '../entities/Task.entity';
@@ -31,9 +30,7 @@ const taskDto: TaskDto = {
 
 describe('TaskService', () => {
   let taskService: TaskService;
-  let authService: AuthService;
   let taskRepository: Repository<Task>;
-  let cacheManager: Cache;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -70,9 +67,7 @@ describe('TaskService', () => {
     }).compile();
 
     taskService = module.get<TaskService>(TaskService);
-    authService = module.get<AuthService>(AuthService);
     taskRepository = module.get<Repository<Task>>(getRepositoryToken(Task));
-    cacheManager = module.get<Cache>(CACHE_MANAGER);
   });
 
   it('should be defined', () => {
@@ -80,28 +75,24 @@ describe('TaskService', () => {
   });
 
   describe('findById', () => {
-    it('should try to find a task in the cache and, if it is not found, fetch it from the database', async () => {
+    it('should find a task', async () => {
       const foundTask = await taskService.findById(task.id);
       expect(foundTask.name).toEqual(task.name);
       expect(foundTask.user.password).toBeUndefined();
-      expect(cacheManager.get).toHaveBeenCalled();
-      expect(cacheManager.set).toHaveBeenCalled();
       expect(taskRepository.findOne).toHaveBeenCalled();
     });
   });
 
   describe('createTask', () => {
-    it("should create a task, save it in the cache and delete the owner's cache", async () => {
+    it('should create a task', async () => {
       const createdTask = await taskService.createTask(taskDto);
       expect(createdTask.name).toEqual(taskDto.name);
       expect(taskRepository.save).toHaveBeenCalled();
-      expect(cacheManager.set).toHaveBeenCalled();
-      expect(authService.deleteUserCache).toHaveBeenCalled();
     });
   });
 
   describe('updateTask', () => {
-    it("should update the task, overwrite saved cache and delete the owner's cache", async () => {
+    it('should update the task', async () => {
       const updatedTask = await taskService.updateTask({
         ...taskDto,
         name: 'Updated task',
@@ -111,16 +102,12 @@ describe('TaskService', () => {
         updatedTask.createdAt.toISOString(),
       );
       expect(taskRepository.save).toHaveBeenCalled();
-      expect(cacheManager.set).toHaveBeenCalled();
-      expect(authService.deleteUserCache).toHaveBeenCalled();
     });
   });
 
   describe('deleteTask', () => {
-    it('should delete the task and remove it from cache', async () => {
+    it('should delete the task', async () => {
       await taskService.deleteTask(task.id);
-      expect(authService.deleteUserCache).toHaveBeenCalled();
-      expect(cacheManager.del).toHaveBeenCalled();
       expect(taskRepository.delete).toHaveBeenCalled();
     });
   });
