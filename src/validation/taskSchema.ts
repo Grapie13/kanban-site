@@ -6,8 +6,7 @@ export const taskSchema = Joi.object({
     'string.empty': 'Name cannot be empty',
     'any.required': 'Name is required',
   }),
-  stage: Joi.string().allow('TODO', 'DOING', 'DONE').default('TODO').messages({
-    'string.empty': 'Stage cannot be empty',
+  stage: Joi.string().valid('TODO', 'DOING', 'DONE').default('TODO').messages({
     'any.only': 'Stage has to be one of the following: TODO, DOING, DONE',
   }),
   token: Joi.string(),

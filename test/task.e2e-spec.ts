@@ -1,7 +1,14 @@
-import got, { HTTPError } from 'got';
+import got from 'got';
 import { Connection, createConnection, QueryRunner } from 'typeorm';
 import { randomBytes } from 'crypto';
-import { headers, loadEnv, url } from './helpers';
+import {
+  checkError,
+  createTask,
+  headers,
+  loadEnv,
+  signup,
+  url,
+} from './helpers';
 
 // User values
 const username = 'Tester';
@@ -44,23 +51,14 @@ describe('Kanban-site task e2e', () => {
   describe('GET /v1/task/:id', () => {
     it('should return a 404 error if a task does not exist', async () => {
       await got(`${url}/v1/task/5000`).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(404);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('No task with that ID exists');
+        checkError(err, 404, 'No task with that ID exists');
       });
     });
 
     it('should find a task', async () => {
-      let res = await got(`${url}/v1/auth/signup`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ username, password }),
-      });
-      expect(res.statusCode).toEqual(201);
-      const { token } = JSON.parse(res.body);
+      const token = await signup(username, password);
 
-      res = await got(`${url}/v1/task`, {
+      let res = await got(`${url}/v1/task`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ name, stage, token }),
@@ -84,12 +82,7 @@ describe('Kanban-site task e2e', () => {
         headers,
         body: JSON.stringify({ name, stage }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(403);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual(
-          'You are not authorized to access this route',
-        );
+        checkError(err, 403, 'You are not authorized to access this route');
       });
 
       await got(`${url}/v1/task`, {
@@ -97,33 +90,19 @@ describe('Kanban-site task e2e', () => {
         headers,
         body: JSON.stringify({ name, stage, token: 'wrongtoken' }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(403);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual(
-          'You are not authorized to access this route',
-        );
+        checkError(err, 403, 'You are not authorized to access this route');
       });
     });
 
     it('should return a 400 error if the name does not pass validation', async () => {
-      const res = await got(`${url}/v1/auth/signup`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ username, password }),
-      });
-      expect(res.statusCode).toEqual(201);
-      const { token } = JSON.parse(res.body);
+      const token = await signup(username, password);
 
       await got(`${url}/v1/task`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ name: '', stage, token }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('Name cannot be empty');
+        checkError(err, 400, 'Name cannot be empty');
       });
 
       await got(`${url}/v1/task`, {
@@ -135,10 +114,7 @@ describe('Kanban-site task e2e', () => {
           token,
         }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('Name cannot exceed 255 characters');
+        checkError(err, 400, 'Name cannot exceed 255 characters');
       });
 
       await got(`${url}/v1/task`, {
@@ -149,11 +125,245 @@ describe('Kanban-site task e2e', () => {
           token,
         }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('Name is required');
+        checkError(err, 400, 'Name is required');
       });
+    });
+
+    it('should return a 400 error if the stage does not pass validation', async () => {
+      const token = await signup(username, password);
+
+      await got(`${url}/v1/task`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ name, stage: 'NOT_A_STAGE', token }),
+      }).catch((err) => {
+        checkError(
+          err,
+          400,
+          'Stage has to be one of the following: TODO, DOING, DONE',
+        );
+      });
+
+      await got(`${url}/v1/task`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ name, stage: '', token }),
+      }).catch((err) => {
+        checkError(
+          err,
+          400,
+          'Stage has to be one of the following: TODO, DOING, DONE',
+        );
+      });
+    });
+
+    it('should create a task and return its details', async () => {
+      const token = await signup(username, password);
+
+      const res = await got(`${url}/v1/task`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ name, stage, token }),
+      });
+      expect(res.statusCode).toEqual(201);
+      const body = JSON.parse(res.body);
+      expect(body.task).toBeDefined();
+      expect(body.task.name).toEqual(name);
+      expect(body.task.stage).toEqual(stage);
+      expect(body.task.user.username).toEqual(username);
+    });
+  });
+
+  describe('PATCH /v1/task/:id', () => {
+    it('should return a 404 error if a task does not exist', async () => {
+      const token = await signup(username, password);
+
+      await got(`${url}/v1/task/5000`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ name, stage, token }),
+      }).catch((err) => {
+        checkError(err, 404, 'No task with that ID exists');
+      });
+    });
+
+    it('should return a 403 error if the user provides an invalid token', async () => {
+      const token = await signup(username, password);
+      const task = await createTask(name, stage, token);
+
+      await got(`${url}/v1/task/${task.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ name, stage, token: 'wrongtoken' }),
+      }).catch((err) => {
+        checkError(err, 403, 'You are not authorized to access this route');
+      });
+
+      await got(`${url}/v1/task/${task.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ name, stage }),
+      }).catch((err) => {
+        checkError(err, 403, 'You are not authorized to access this route');
+      });
+    });
+
+    it('should return a 403 error if the user trying to edit a task is not the owner', async () => {
+      let token = await signup(username, password);
+      const task = await createTask(name, stage, token);
+      token = await signup('MaliciousUser', password);
+
+      await got(`${url}/v1/task/${task.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ name, stage, token }),
+      }).catch((err) => {
+        checkError(err, 403, 'You are not authorized to edit this task');
+      });
+    });
+
+    it('should return a 400 error if the name does not pass validation', async () => {
+      const token = await signup(username, password);
+      const task = await createTask(name, stage, token);
+
+      await got(`${url}/v1/task/${task.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ name: '', stage, token }),
+      }).catch((err) => {
+        checkError(err, 400, 'Name cannot be empty');
+      });
+
+      await got(`${url}/v1/task/${task.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          name: randomBytes(256).toString('hex'),
+          stage,
+          token,
+        }),
+      }).catch((err) => {
+        checkError(err, 400, 'Name cannot exceed 255 characters');
+      });
+
+      await got(`${url}/v1/task/${task.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          stage,
+          token,
+        }),
+      }).catch((err) => {
+        checkError(err, 400, 'Name is required');
+      });
+    });
+
+    it('should return a 400 error if the stage does not pass validation', async () => {
+      const token = await signup(username, password);
+      const task = await createTask(name, stage, token);
+
+      await got(`${url}/v1/task/${task.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ name, stage: 'NOT_A_STAGE', token }),
+      }).catch((err) => {
+        checkError(
+          err,
+          400,
+          'Stage has to be one of the following: TODO, DOING, DONE',
+        );
+      });
+
+      await got(`${url}/v1/task/${task.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ name, stage: '', token }),
+      }).catch((err) => {
+        checkError(
+          err,
+          400,
+          'Stage has to be one of the following: TODO, DOING, DONE',
+        );
+      });
+    });
+
+    it('should update the task', async () => {
+      const token = await signup(username, password);
+      const task = await createTask(name, stage, token);
+      const updatedName = 'Task edit';
+      const updatedStage = 'DONE';
+
+      const res = await got(`${url}/v1/task/${task.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ name: updatedName, stage: updatedStage, token }),
+      });
+      expect(res.statusCode).toEqual(200);
+      const body = JSON.parse(res.body);
+      expect(body.task).toBeDefined();
+      expect(body.task.name).toEqual(updatedName);
+      expect(body.task.stage).toEqual(updatedStage);
+    });
+  });
+
+  describe('DELETE /v1/task/:id', () => {
+    it('should return a 404 error if the task does not exist', async () => {
+      const token = await signup(username, password);
+
+      await got(`${url}/v1/task/5000`, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ token }),
+      }).catch((err) => {
+        checkError(err, 404, 'No task with that ID exists');
+      });
+    });
+
+    it('should return a 403 error if the user provides an invalid token', async () => {
+      const token = await signup(username, password);
+      const task = await createTask(name, stage, token);
+
+      await got(`${url}/v1/task/${task.id}`, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ token: 'wrongtoken' }),
+      }).catch((err) => {
+        checkError(err, 403, 'You are not authorized to access this route');
+      });
+
+      await got(`${url}/v1/task/${task.id}`, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({}),
+      }).catch((err) => {
+        checkError(err, 403, 'You are not authorized to access this route');
+      });
+    });
+
+    it('should return a 403 error if the user is not the owner', async () => {
+      let token = await signup(username, password);
+      const task = await createTask(name, stage, token);
+      token = await signup('MaliciousUser', password);
+
+      await got(`${url}/v1/task/${task.id}`, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ token }),
+      }).catch((err) => {
+        checkError(err, 403, 'You are not authorized to delete this task');
+      });
+    });
+
+    it('should delete a task', async () => {
+      const token = await signup(username, password);
+      const task = await createTask(name, stage, token);
+
+      const res = await got(`${url}/v1/task/${task.id}`, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ token }),
+      });
+      expect(res.statusCode).toEqual(200);
     });
   });
 });

@@ -1,6 +1,6 @@
-import got, { HTTPError } from 'got';
+import got from 'got';
 import { Connection, createConnection, QueryRunner } from 'typeorm';
-import { headers, loadEnv, signup, url } from './helpers';
+import { checkError, headers, loadEnv, signup, url } from './helpers';
 
 // User values
 const username = 'Tester';
@@ -39,10 +39,7 @@ describe('Kanban-site auth e2e', () => {
   describe('GET /v1/auth/user/:username', () => {
     it('should return a 404 error if the user does not exist', async () => {
       await got(`${url}/v1/auth/user/Doesnotexist`).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(404);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('No user with that username exists');
+        checkError(err, 404, 'No user with that username exists');
       });
     });
 
@@ -65,10 +62,7 @@ describe('Kanban-site auth e2e', () => {
         headers,
         body: JSON.stringify({ username: '', password }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('Username cannot be empty');
+        checkError(err, 400, 'Username cannot be empty');
       });
 
       await got(`${url}/v1/auth/signup`, {
@@ -79,10 +73,7 @@ describe('Kanban-site auth e2e', () => {
           password,
         }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('Username cannot exceed 20 characters');
+        checkError(err, 400, 'Username cannot exceed 20 characters');
       });
 
       await got(`${url}/v1/auth/signup`, {
@@ -90,12 +81,7 @@ describe('Kanban-site auth e2e', () => {
         headers,
         body: JSON.stringify({ username: 'no', password }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual(
-          'Username has to be at least 3 characters long',
-        );
+        checkError(err, 400, 'Username has to be at least 3 characters long');
       });
 
       await got(`${url}/v1/auth/signup`, {
@@ -103,12 +89,7 @@ describe('Kanban-site auth e2e', () => {
         headers,
         body: JSON.stringify({ username: 321, password }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual(
-          'Username must contain at least one character',
-        );
+        checkError(err, 400, 'Username must contain at least one character');
       });
     });
 
@@ -118,10 +99,7 @@ describe('Kanban-site auth e2e', () => {
         headers,
         body: JSON.stringify({ username, password: '' }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('Password cannot be empty');
+        checkError(err, 400, 'Password cannot be empty');
       });
 
       await got(`${url}/v1/auth/signup`, {
@@ -132,10 +110,7 @@ describe('Kanban-site auth e2e', () => {
           password: 'superlongpasswordthatwilldefinitelynotpassthecheck',
         }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('Password cannot exceed 30 characters');
+        checkError(err, 400, 'Password cannot exceed 30 characters');
       });
 
       await got(`${url}/v1/auth/signup`, {
@@ -143,12 +118,7 @@ describe('Kanban-site auth e2e', () => {
         headers,
         body: JSON.stringify({ username, password: 'short' }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual(
-          'Password has to be at least 6 characters long',
-        );
+        checkError(err, 400, 'Password has to be at least 6 characters long');
       });
 
       await got(`${url}/v1/auth/signup`, {
@@ -156,12 +126,7 @@ describe('Kanban-site auth e2e', () => {
         headers,
         body: JSON.stringify({ username, password: 123 }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual(
-          'Password must contain at least one character',
-        );
+        checkError(err, 400, 'Password must contain at least one character');
       });
     });
 
@@ -173,12 +138,7 @@ describe('Kanban-site auth e2e', () => {
         headers,
         body: JSON.stringify({ username, password }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(400);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual(
-          'A user with this username already exists',
-        );
+        checkError(err, 400, 'A user with this username already exists');
       });
     });
 
@@ -204,10 +164,7 @@ describe('Kanban-site auth e2e', () => {
         headers,
         body: JSON.stringify({ username, password }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(401);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('Invalid username or password');
+        checkError(err, 401, 'Invalid username or password');
       });
     });
 
@@ -219,10 +176,7 @@ describe('Kanban-site auth e2e', () => {
         headers,
         body: JSON.stringify({ username, password: 'wrongpassword' }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(401);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('Invalid username or password');
+        checkError(err, 401, 'Invalid username or password');
       });
     });
 
@@ -249,12 +203,7 @@ describe('Kanban-site auth e2e', () => {
         headers,
         body: JSON.stringify({ token: 'wrongtoken' }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(403);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual(
-          'You are not authorized to access this route',
-        );
+        checkError(err, 403, 'You are not authorized to access this route');
       });
     });
 
@@ -284,10 +233,7 @@ describe('Kanban-site auth e2e', () => {
         headers,
         body: JSON.stringify({ token }),
       }).catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err.response.statusCode).toEqual(404);
-        const body = JSON.parse(err.response.body);
-        expect(body.message).toEqual('There is no user bound to this token');
+        checkError(err, 404, 'There is no user bound to this token');
       });
     });
   });

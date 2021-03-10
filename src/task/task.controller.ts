@@ -59,7 +59,7 @@ export class TaskController {
     if (task.user.username !== taskInfo.username) {
       throw new ForbiddenException('You are not authorized to edit this task');
     }
-    task = await this.taskService.updateTask({ id, ...taskInfo });
+    task = await this.taskService.updateTask({ ...taskInfo, id });
     return {
       task,
     };
