@@ -14,6 +14,7 @@ async function bootstrap() {
     new FastifyAdapter({ logger: true }),
   );
   app.register(helmet);
+  app.enableCors();
   await app.listen(process.env.APP_PORT, '0.0.0.0');
 }
 bootstrap();
